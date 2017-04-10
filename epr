@@ -1,0 +1,73 @@
+require "csv"
+require "optparse"
+require "time"
+require "github_api"
+
+def localtime(t)
+  Time.parse(t).localtime.strftime("%x %X")
+end
+
+def parse_repos(repos)
+  repos.map do |r|
+    abort "invalid repository #{r}" unless r =~ %r{\A(\S+)/(\S+)\z}
+    [ $1, $2 ]
+  end
+end
+
+token  = ENV["EPR_TOKEN"]
+filter = "open"
+users  = nil
+
+parser = OptionParser.new do |opts|
+  opts.banner = "usage: #{File.basename($0)} [-s state] [-t token] [-u user1,user2...] user/repo1 [user/repo2...]"
+
+  opts.on "-c", "--creator=user1,user2,...", Array, "Export PRs created by the given username(s)" do |u|
+    users = u
+  end
+
+  opts.on "-t", "--token=TOKEN", "API token" do |t|
+    token = t
+  end
+
+  opts.on "-s", "--state=STATE", %w[open closed all], "Export PRs in the given state, defaults to open" do |f|
+    filter = f
+  end
+end
+
+parser.parse!
+abort parser.banner if ARGV.empty?
+abort "API token required! Set it via the -t option or via the EPR_TOKEN environment variable" unless token
+
+repos = parse_repos(ARGV)
+
+rows = []
+rows << %w[# User Title State Created Updated URL]
+rows[-1].unshift("Repository") if repos.size > 1
+
+gh = Github.new(:oauth_token => token, :auto_pagination => true)
+
+repos.each do |user, repo|
+  gh.pull_requests.list(:user => user, :repo => repo, :state => filter).each_page do |page|
+    next if page.size.zero?     # Needed for auto_pagination
+
+    page.each do |pr|
+      next if users && !users.include?(pr.user.login)
+
+      rows << [
+        "#{user}/#{repo}",
+        pr.number,
+        pr.user.login,
+        pr.title,
+        pr.state,
+        localtime(pr.created_at),
+        localtime(pr.updated_at),
+        pr.html_url,
+      ]
+
+      rows[-1].shift unless repos.size > 1
+    end
+
+    rows.each { |r| puts r.to_csv }
+    rows.clear
+  end
+end
