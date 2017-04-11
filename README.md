@@ -11,7 +11,7 @@ Currently only supports GitHub.
 
 ## Usage
 
-    usage: epr [-s state] [-t token] [-u user1,user2...] user/repo1 [user/repo2...]
+    usage: epr [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]
         -c, --creator=user1,user2,...    Export PRs created by the given username(s)
         -t, --token=TOKEN                API token
         -s, --state=STATE                Export PRs in the given state, defaults to open

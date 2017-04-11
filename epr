@@ -19,7 +19,7 @@ filter = "open"
 users  = nil
 
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: #{File.basename($0)} [-s state] [-t token] [-u user1,user2...] user/repo1 [user/repo2...]"
+  opts.banner = "usage: #{File.basename($0)} [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
 
   opts.on "-c", "--creator=user1,user2,...", Array, "Export PRs created by the given username(s)" do |u|
     users = u
