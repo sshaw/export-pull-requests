@@ -11,16 +11,31 @@ Currently only supports GitHub.
 
 ## Usage
 
-    usage: epr [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]
-        -c, --creator=user1,user2,...    Export PRs created by the given username(s)
+    usage: epr [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]
+        -c, --creator=user1,user2,...    Export PRs created by given username(s); prepend `!' to exclude user
+        -h, --help                       Show this message
         -t, --token=TOKEN                API token
         -s, --state=STATE                Export PRs in the given state, defaults to open
+        -v, --version                    epr version
+
+### API Token
+
+The GitHub API token can also be given by:
+
+* `EPR_TOKEN` environment variable
+* `epr.token` setting in .gitconfig
+* `github.oauth-token` setting in .gitconfig
 
 
-The GitHub API token can also be set via the `EPR_TOKEN` environment variable.
+### Examples
 
+Export all open and closed pull requests in `sshaw/git-link` and `sshaw/itunes_store_transporter`:
 
     bundle exec ruby epr -s all sshaw/git-link sshaw/itunes_store_transporter > pr.csv
+
+Export open pull request not created by `sshaw` in `padrino/padrino-framework`:
+
+    bundle exec ruby epr -c '!sshaw' padrino/padrino-framework > pr.csv
 
 ## Author
 

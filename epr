@@ -3,6 +3,8 @@ require "optparse"
 require "time"
 require "github_api"
 
+VERSION = "0.0.1"
+
 def localtime(t)
   Time.parse(t).localtime.strftime("%x %X")
 end
@@ -14,15 +16,35 @@ def parse_repos(repos)
   end
 end
 
-token  = ENV["EPR_TOKEN"]
+def lookup_token
+  return ENV["EPR_TOKEN"] unless ENV["EPR_TOKEN"].to_s.strip.empty?
+
+  begin
+    %w[epr.token github.oauth-token].each do |setting|
+      token = `git config #{setting}`.chomp
+      return token unless token.empty?
+    end
+  rescue Errno::ENOENT
+    # git not found, ignore
+  end
+end
+
+token  = lookup_token
 filter = "open"
-users  = nil
+include_users = []
+exclude_users = []
 
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: #{File.basename($0)} [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
+  opts.banner = "usage: #{File.basename($0)} [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
 
-  opts.on "-c", "--creator=user1,user2,...", Array, "Export PRs created by the given username(s)" do |u|
-    users = u
+  opts.on "-c", "--creator=user1,user2,...", Array, "Export PRs created by given username(s); prepend `!' to exclude user" do |u|
+    exclude_users, include_users = u.partition { |name| name.start_with?("!") }
+    exclude_users.map! { |name| name[1..-1] } # remove "!"
+  end
+
+  opts.on "-h", "--help", "Show this message" do
+    puts opts
+    exit
   end
 
   opts.on "-t", "--token=TOKEN", "API token" do |t|
@@ -31,6 +53,11 @@ parser = OptionParser.new do |opts|
 
   opts.on "-s", "--state=STATE", %w[open closed all], "Export PRs in the given state, defaults to open" do |f|
     filter = f
+  end
+
+  opts.on "-v", "--version", "epr version" do
+    puts "v#{VERSION} (GitHub API v#{Github::VERSION})"
+    exit
   end
 end
 
@@ -51,7 +78,8 @@ repos.each do |user, repo|
     next if page.size.zero?     # Needed for auto_pagination
 
     page.each do |pr|
-      next if users && !users.include?(pr.user.login)
+      next if exclude_users.include?(pr.user.login)
+      next if include_users.any? && !include_users.include?(pr.user.login)
 
       rows << [
         "#{user}/#{repo}",
