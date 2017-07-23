@@ -26,7 +26,7 @@ This installs the `epr` executable.
 
 ### Config
 
-These can all be set via the command line. See [#Usage] or `epr -h`.
+These can all be set by one of the below methods or [via the command line](#usage).
 
 #### Token
 
