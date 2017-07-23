@@ -19,7 +19,7 @@ This installs the `epr` executable.
     usage: epr [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]
         -c, --creator=user1,user2,...    Export PRs created by given username(s); prepend `!' to exclude user
         -h, --help                       Show this message
-        -p, --provider=NAME              Service provider: gitlab or github; defaults to github
+        -p, --provider=NAME              Service provider, one of: ["github", "gitlab", "bitbucket"]
         -t, --token=TOKEN                API token
         -s, --state=STATE                Export PRs in the given state, defaults to open
         -v, --version                    epr version
