@@ -2,8 +2,9 @@ require "csv"
 require "optparse"
 require "time"
 require "github_api"
+require "gitlab"
 
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 
 def localtime(t)
   Time.parse(t).localtime.strftime("%x %X")
@@ -14,6 +15,10 @@ def parse_repos(repos)
     abort "invalid repository #{r}" unless r =~ %r{\A(\S+)/(\S+)\z}
     [ $1, $2 ]
   end
+end
+
+def skip_user?(user)
+  $exclude_users.include?(user) || $include_users.any? && !$include_users.include?(user)
 end
 
 def lookup_token
@@ -29,57 +34,15 @@ def lookup_token
   end
 end
 
-token  = lookup_token
-filter = "open"
-include_users = []
-exclude_users = []
+def github(user, repo)
+  rows = []
 
-parser = OptionParser.new do |opts|
-  opts.banner = "usage: #{File.basename($0)} [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
-
-  opts.on "-c", "--creator=user1,user2,...", Array, "Export PRs created by given username(s); prepend `!' to exclude user" do |u|
-    exclude_users, include_users = u.partition { |name| name.start_with?("!") }
-    exclude_users.map! { |name| name[1..-1] } # remove "!"
-  end
-
-  opts.on "-h", "--help", "Show this message" do
-    puts opts
-    exit
-  end
-
-  opts.on "-t", "--token=TOKEN", "API token" do |t|
-    token = t
-  end
-
-  opts.on "-s", "--state=STATE", %w[open closed all], "Export PRs in the given state, defaults to open" do |f|
-    filter = f
-  end
-
-  opts.on "-v", "--version", "epr version" do
-    puts "v#{VERSION} (GitHub API v#{Github::VERSION})"
-    exit
-  end
-end
-
-parser.parse!
-abort parser.banner if ARGV.empty?
-abort "API token required! Set it via the -t option or via the EPR_TOKEN environment variable" unless token
-
-repos = parse_repos(ARGV)
-
-rows = []
-rows << %w[# User Title State Created Updated URL]
-rows[-1].unshift("Repository") if repos.size > 1
-
-gh = Github.new(:oauth_token => token, :auto_pagination => true)
-
-repos.each do |user, repo|
-  gh.pull_requests.list(:user => user, :repo => repo, :state => filter).each_page do |page|
+  $gh ||= Github.new(:oauth_token => $token, :auto_pagination => true)
+  $gh.pull_requests.list(:user => user, :repo => repo, :state => $filter).each_page do |page|
     next if page.size.zero?     # Needed for auto_pagination
 
     page.each do |pr|
-      next if exclude_users.include?(pr.user.login)
-      next if include_users.any? && !include_users.include?(pr.user.login)
+      next if skip_user?(pr.user.login)
 
       rows << [
         "#{user}/#{repo}",
@@ -91,11 +54,99 @@ repos.each do |user, repo|
         localtime(pr.updated_at),
         pr.html_url,
       ]
-
-      rows[-1].shift unless repos.size > 1
     end
+  end
+
+  rows
+end
+
+def gitlab(user, repo)
+  rows = []
+
+  # Do we care about this differing in output?
+  state = $filter == "open" ? "opened" : $filter
+
+  # TODO: custom endpoint
+  $gitlab ||= Gitlab.client(:token => $token, :endpoint => "https://gitlab.com/api/v4")
+  $gitlab.merge_requests("#{user}/#{repo}", :state => state).auto_paginate do |mr|
+    next if skip_user?(mr.author.username)
+
+    rows << [
+      mr.iid,
+      mr.author.username,
+      mr.title,
+      mr.state,
+      localtime(mr.created_at),
+      localtime(mr.updated_at),
+      mr.web_url
+    ]
+  end
+
+  rows
+end
+
+def export_repos(repos)
+  rows = []
+  rows << %w[# User Title State Created Updated URL]
+  rows[-1].unshift("Repository") if repos.size > 1
+
+  repos.each do |user, repo|
+    case $provider
+    when "github"
+      rows.concat(github(user, repo))
+    when "gitlab"
+      rows.concat(gitlab(user, repo))
+    else
+      abort "unknown service provider: #{service}"
+    end
+
+    # Repository column is dropped if we only have one repo
+    rows[-1].shift unless repos.size > 1
 
     rows.each { |r| puts r.to_csv }
     rows.clear
   end
 end
+
+$exclude_users = []
+$include_users = []
+$filter = "open"
+$provider = "github"
+$token = lookup_token
+
+parser = OptionParser.new do |opts|
+  opts.banner = "usage: #{File.basename($0)} [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
+
+  opts.on "-c", "--creator=user1,user2,...", Array, "Export PRs created by given username(s); prepend `!' to exclude user" do |u|
+    $exclude_users, $include_users = u.partition { |name| name.start_with?("!") }
+    $exclude_users.map! { |name| name[1..-1] } # remove "!"
+  end
+
+  opts.on "-h", "--help", "Show this message" do
+    puts opts
+    exit
+  end
+
+  opts.on "-t", "--token=TOKEN", "API token" do |t|
+    $token = t
+  end
+
+  opts.on "-p, --provider=NAME", "Service provider: gitlab or github; defaults to github" do |name|
+    $provider = name
+  end
+
+  opts.on "-s", "--state=STATE", %w[open closed all merged], "Export PRs in the given state, defaults to open" do |f|
+    $filter = f
+  end
+
+  opts.on "-v", "--version", "epr version" do
+    puts "v#{VERSION} (GitHub API v#{Github::VERSION}, GitLab API v#{Gitlab::VERSION})"
+    exit
+  end
+end
+
+parser.parse!
+abort parser.banner if ARGV.empty?
+abort "API token required! Set it via the -t option or via the EPR_TOKEN environment variable" unless $token
+
+export_repos(parse_repos(ARGV))

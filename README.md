@@ -1,8 +1,8 @@
 # Export Pull Requests
 
-Export pull requests to a CSV file.
+Export pull requests/merge requests to a CSV file.
 
-Currently only supports GitHub.
+Supports GitHub and GitLab.
 
 ## Installation
 
@@ -14,6 +14,7 @@ Currently only supports GitHub.
     usage: epr [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]
         -c, --creator=user1,user2,...    Export PRs created by given username(s); prepend `!' to exclude user
         -h, --help                       Show this message
+        -p, --provider=NAME              Service provider: gitlab or github; defaults to github
         -t, --token=TOKEN                API token
         -s, --state=STATE                Export PRs in the given state, defaults to open
         -v, --version                    epr version
@@ -26,7 +27,6 @@ The GitHub API token can also be given by:
 * `epr.token` setting in .gitconfig
 * `github.oauth-token` setting in .gitconfig
 
-
 ### Examples
 
 Export all open and closed pull requests in `sshaw/git-link` and `sshaw/itunes_store_transporter`:
@@ -36,6 +36,10 @@ Export all open and closed pull requests in `sshaw/git-link` and `sshaw/itunes_s
 Export open pull request not created by `sshaw` in `padrino/padrino-framework`:
 
     bundle exec ruby epr -c '!sshaw' padrino/padrino-framework > pr.csv
+
+Export open pull requests from a GitLab project:
+
+    bundle exec ruby epr -p gitlab gitlab-org/gitlab-ce > pr.csv
 
 ## Author
 
