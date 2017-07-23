@@ -4,7 +4,7 @@ require "time"
 require "github_api"
 require "gitlab"
 
-VERSION = "0.0.2"
+VERSION = "0.1.0"
 
 def localtime(t)
   Time.parse(t).localtime.strftime("%x %X")
@@ -72,6 +72,8 @@ def gitlab(user, repo)
     next if skip_user?(mr.author.username)
 
     rows << [
+      "#{user}/#{repo}",
+      # Yes, it's called iid
       mr.iid,
       mr.author.username,
       mr.title,
@@ -131,7 +133,7 @@ parser = OptionParser.new do |opts|
     $token = t
   end
 
-  opts.on "-p, --provider=NAME", "Service provider: gitlab or github; defaults to github" do |name|
+  opts.on "-p, --provider=NAME", %w[github gitlab], "Service provider: gitlab or github; defaults to github" do |name|
     $provider = name
   end
 

@@ -21,7 +21,7 @@ Supports GitHub and GitLab.
 
 ### API Token
 
-The GitHub API token can also be given by:
+The API token can also be given by:
 
 * `EPR_TOKEN` environment variable
 * `epr.token` setting in .gitconfig
@@ -37,7 +37,7 @@ Export open pull request not created by `sshaw` in `padrino/padrino-framework`:
 
     bundle exec ruby epr -c '!sshaw' padrino/padrino-framework > pr.csv
 
-Export open pull requests from a GitLab project:
+Export open merge requests from a GitLab project:
 
     bundle exec ruby epr -p gitlab gitlab-org/gitlab-ce > pr.csv
 
