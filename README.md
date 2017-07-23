@@ -46,6 +46,12 @@ Export open merge requests from a GitLab project:
 
     epr -p gitlab gitlab-org/gitlab-ce > pr.csv
 
+### GitLab
+
+Currently the API endpoint URL is hardcoded to `https://gitlab.com/api/v4`.
+
+Enterprise editions of GitLab have an [issue export feature](https://docs.gitlab.com/ee/user/project/issues/csv_export.html).
+
 ## Author
 
 Skye Shaw [skye.shaw AT gmail]

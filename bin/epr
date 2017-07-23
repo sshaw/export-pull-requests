@@ -151,7 +151,6 @@ end
 
 parser.parse!
 abort parser.banner if ARGV.empty?
-abort "API token required! Set it via the -t option or via the EPR_TOKEN environment variable" unless $token
 
 begin
   export_repos(parse_repos(ARGV))
