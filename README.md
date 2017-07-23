@@ -2,7 +2,7 @@
 
 Export pull requests/merge requests to a CSV file.
 
-Supports GitHub and GitLab.
+Supports GitHub, GitLab, and Bitbucket.
 
 ## Installation
 

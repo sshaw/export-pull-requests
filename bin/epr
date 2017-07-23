@@ -44,7 +44,7 @@ def bitbucket(user, repo)
   page = 0
   rows = []
 
-  $bitbucket ||= BitBucket.new(:base_auth => $token)
+  $bitbucket ||= BitBucket.new(:basic_auth => $token)
   # TODO: make sure no need to translate any states
   # https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/pullrequests
 
@@ -187,7 +187,7 @@ parser = OptionParser.new do |opts|
   end
 
   opts.on "-v", "--version", "epr version" do
-    puts "v#{VERSION} (GitHub API v#{Github::VERSION}, GitLab API v#{Gitlab::VERSION})"
+    puts "v#{VERSION} (GitHub v#{Github::VERSION}, GitLab v#{Gitlab::VERSION}, Bitbucket v#{BitBucket::VERSION::STRING})"
     exit
   end
 end
