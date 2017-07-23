@@ -3,10 +3,13 @@
 require "csv"
 require "optparse"
 require "time"
+
 require "github_api"
 require "gitlab"
+require "bitbucket_rest_api"
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
+SERVICES = %w[github gitlab bitbucket]
 
 def localtime(t)
   Time.parse(t).localtime.strftime("%x %X")
@@ -34,6 +37,33 @@ def lookup_token
   rescue Errno::ENOENT
     # git not found, ignore
   end
+end
+
+def bitbucket(user, repo)
+  rows = []
+
+  # TODO: Silence warnings
+  $bitbucket ||= BitBucket.new(:base_auth => $token)
+  # TODO: translate states: https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/pullrequests
+
+  prs = $bitbucket.repos.pull_request.all(user, repo, :state => $filter)
+  # values = [ page_size, Hashie::Array[<Hashie::Mash>], N, N ]
+  prs.values[1].each do |pr|
+    next if skip_user?(pr.author.username)
+
+    rows << [
+      "#{user}/#{repo}",
+      pr.id,
+      pr.author.username,
+      pr.title,
+      pr.state,
+      localtime(pr.created_on),
+      localtime(pr.updated_on),
+      pr["links"].html.href
+    ]
+  end
+
+  rows
 end
 
 def github(user, repo)
@@ -99,12 +129,14 @@ def export_repos(repos)
       rows.concat(github(user, repo))
     when "gitlab"
       rows.concat(gitlab(user, repo))
+    when "bitbucket"
+      rows.concat(bitbucket(user, repo))
     else
       abort "unknown service provider: #{service}"
     end
 
     rows.each do |r|
-      # Repository column is dropped if we only have one repo
+      # Drop Repository column if we only have one repo
       r.shift unless repos.size > 1
       puts r.to_csv
     end
@@ -115,7 +147,7 @@ end
 $exclude_users = []
 $include_users = []
 $filter = "open"
-$provider = "github"
+$provider = ENV["EPR_SERVICE"] || SERVICES[0]
 $token = lookup_token
 
 parser = OptionParser.new do |opts|
@@ -135,7 +167,7 @@ parser = OptionParser.new do |opts|
     $token = t
   end
 
-  opts.on "-p, --provider=NAME", %w[github gitlab], "Service provider: gitlab or github; defaults to github" do |name|
+  opts.on "-p, --provider=NAME", SERVICES, "Service provider, one of: #{SERVICES}" do |name|
     $provider = name
   end
 

@@ -24,13 +24,21 @@ This installs the `epr` executable.
         -s, --state=STATE                Export PRs in the given state, defaults to open
         -v, --version                    epr version
 
-### API Token
+### Config
+
+These can all be set via the command line. See [#Usage] or `epr -h`.
+
+#### Token
 
 The API token can also be given by:
 
 * `EPR_TOKEN` environment variable
-* `epr.token` setting in .gitconfig
-* `github.oauth-token` setting in .gitconfig
+* `epr.token` setting in `.gitconfig`
+* `github.oauth-token` setting in `.gitconfig`
+
+#### Default Service
+
+GitHub is the default. You can set a new default via `EPR_SERVICE`.
 
 ### Examples
 
@@ -46,7 +54,14 @@ Export open merge requests from a GitLab project:
 
     epr -p gitlab gitlab-org/gitlab-ce > pr.csv
 
-### GitLab
+### Service Notes
+
+#### Bitbucket
+
+You can use [app passwords](https://confluence.atlassian.com/bitbucket/app-passwords-828781300.html) for the API token.
+Just provide your token HTTP Auth style using: `username:app_password`.
+
+#### GitLab
 
 Currently the API endpoint URL is hardcoded to `https://gitlab.com/api/v4`.
 
