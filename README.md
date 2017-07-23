@@ -6,8 +6,13 @@ Supports GitHub and GitLab.
 
 ## Installation
 
-    cd path_to_repository
-    bundle install  # http://bundler.io/
+[Ruby](https://www.ruby-lang.org/en/documentation/installation/) is required.
+
+With Ruby installed run:
+
+    gem install export-pull-requests
+
+This installs the `epr` executable.
 
 ## Usage
 
@@ -31,15 +36,15 @@ The API token can also be given by:
 
 Export all open and closed pull requests in `sshaw/git-link` and `sshaw/itunes_store_transporter`:
 
-    bundle exec ruby epr -s all sshaw/git-link sshaw/itunes_store_transporter > pr.csv
+    epr -s all sshaw/git-link sshaw/itunes_store_transporter > pr.csv
 
 Export open pull request not created by `sshaw` in `padrino/padrino-framework`:
 
-    bundle exec ruby epr -c '!sshaw' padrino/padrino-framework > pr.csv
+    epr -c '!sshaw' padrino/padrino-framework > pr.csv
 
 Export open merge requests from a GitLab project:
 
-    bundle exec ruby epr -p gitlab gitlab-org/gitlab-ce > pr.csv
+    epr -p gitlab gitlab-org/gitlab-ce > pr.csv
 
 ## Author
 

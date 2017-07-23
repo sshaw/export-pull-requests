@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require "csv"
 require "optparse"
 require "time"
@@ -89,8 +91,7 @@ end
 
 def export_repos(repos)
   rows = []
-  rows << %w[# User Title State Created Updated URL]
-  rows[-1].unshift("Repository") if repos.size > 1
+  rows << %w[Repository # User Title State Created Updated URL]
 
   repos.each do |user, repo|
     case $provider
@@ -102,10 +103,11 @@ def export_repos(repos)
       abort "unknown service provider: #{service}"
     end
 
-    # Repository column is dropped if we only have one repo
-    rows[-1].shift unless repos.size > 1
-
-    rows.each { |r| puts r.to_csv }
+    rows.each do |r|
+      # Repository column is dropped if we only have one repo
+      r.shift unless repos.size > 1
+      puts r.to_csv
+    end
     rows.clear
   end
 end
@@ -151,4 +153,8 @@ parser.parse!
 abort parser.banner if ARGV.empty?
 abort "API token required! Set it via the -t option or via the EPR_TOKEN environment variable" unless $token
 
-export_repos(parse_repos(ARGV))
+begin
+  export_repos(parse_repos(ARGV))
+rescue => e
+  abort "Export failed: #{e}"
+end
