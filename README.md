@@ -30,7 +30,7 @@ These can all be set by one of the below methods or [via the command line](#usag
 
 #### Token
 
-The API token can also be given by:
+The API token can be set by:
 
 * `EPR_TOKEN` environment variable
 * `epr.token` setting in `.gitconfig`

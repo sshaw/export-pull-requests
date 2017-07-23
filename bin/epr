@@ -3,6 +3,7 @@
 require "csv"
 require "optparse"
 require "time"
+require "logger"
 
 require "github_api"
 require "gitlab"
@@ -40,27 +41,33 @@ def lookup_token
 end
 
 def bitbucket(user, repo)
+  page = 0
   rows = []
 
-  # TODO: Silence warnings
   $bitbucket ||= BitBucket.new(:base_auth => $token)
-  # TODO: translate states: https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/pullrequests
+  # TODO: make sure no need to translate any states
+  # https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/pullrequests
 
-  prs = $bitbucket.repos.pull_request.all(user, repo, :state => $filter)
-  # values = [ page_size, Hashie::Array[<Hashie::Mash>], N, N ]
-  prs.values[1].each do |pr|
-    next if skip_user?(pr.author.username)
+  loop do
+    page += 1
 
-    rows << [
-      "#{user}/#{repo}",
-      pr.id,
-      pr.author.username,
-      pr.title,
-      pr.state,
-      localtime(pr.created_on),
-      localtime(pr.updated_on),
-      pr["links"].html.href
-    ]
+    prs = $bitbucket.repos.pull_request.all(user, repo, :page => page, :state => $filter.upcase)
+    prs["values"].each do |pr|
+      next if pr.author && skip_user?(pr.author.username)
+
+      rows << [
+        "#{user}/#{repo}",
+        pr.id,
+        pr.author ? pr.author.username : "-",
+        pr.title,
+        pr.state,
+        localtime(pr.created_on),
+        localtime(pr.updated_on),
+        pr["links"].html.href
+      ]
+    end
+
+    break unless prs["next"]
   end
 
   rows
@@ -132,7 +139,7 @@ def export_repos(repos)
     when "bitbucket"
       rows.concat(bitbucket(user, repo))
     else
-      abort "unknown service provider: #{service}"
+      abort "unknown service provider: #$provider"
     end
 
     rows.each do |r|
@@ -143,6 +150,10 @@ def export_repos(repos)
     rows.clear
   end
 end
+
+# Hashie is used by Bitbucket, and it spews warnings to stdout. We stop that,
+# specifically: https://github.com/bitbucket-rest-api/bitbucket/issues/87
+Hashie.logger = Logger.new(File::NULL) if defined?(Hashie)
 
 $exclude_users = []
 $include_users = []
