@@ -9,6 +9,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Skye Shaw"]
   s.email       = "skye.shaw@gmail.com"
   s.executables  << "epr"
+  s.extra_rdoc_files = %w[README.md Changes]
   s.homepage    = "https://github.com/sshaw/export-pull-requests"
   s.license     = "MIT"
   s.add_dependency "github_api", "~> 0.16"
