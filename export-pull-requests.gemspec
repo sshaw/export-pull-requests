@@ -16,4 +16,5 @@ Gem::Specification.new do |s|
   s.add_dependency "gitlab", "~> 4.0"
   s.add_dependency "bitbucket_rest_api", "~> 0.1"
   s.add_development_dependency "rake", "~> 0.9"
+  s.post_install_message = "Use the `epr' command to export your pull requests."
 end
