@@ -1,6 +1,6 @@
 # Export Pull Requests
 
-Export pull requests/merge requests to a CSV file.
+Export pull requests/merge requests and/or issues to a CSV file.
 
 Supports GitHub, GitLab, and Bitbucket.
 
@@ -17,12 +17,13 @@ This installs the `epr` executable.
 ## Usage
 
     usage: epr [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]
-        -c, --creator=user1,user2,...    Export PRs created by given username(s); prepend `!' to exclude user
+        -c, --creator=USER1,USER2,...    Export PRs created by given username(s); prepend `!' to exclude user
         -h, --help                       Show this message
-        -p, --provider=NAME              Service provider, one of: ["github", "gitlab", "bitbucket"]
+        -p, --provider=NAME              Service provider: bitbucket, github, or gitlab; defaults to github
         -t, --token=TOKEN                API token
         -s, --state=STATE                Export PRs in the given state, defaults to open
         -v, --version                    epr version
+        -x, --export=TYPE                What to export: pr, issues, or all; defaults to "all"
 
 ### Config
 
@@ -54,14 +55,16 @@ Export open merge requests from a GitLab project:
 
     epr -p gitlab gitlab-org/gitlab-ce > pr.csv
 
-### Service Notes
+## Service Notes
 
-#### Bitbucket
+### Bitbucket
 
 You can use [app passwords](https://confluence.atlassian.com/bitbucket/app-passwords-828781300.html) for the API token.
 Just provide your token HTTP Auth style using: `username:app_password`.
 
-#### GitLab
+### GitLab
+
+Authentication can be done via a [personal access token](https://gitlab.com/profile/personal_access_tokens).
 
 Currently the API endpoint URL is hardcoded to `https://gitlab.com/api/v4`.
 

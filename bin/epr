@@ -9,8 +9,9 @@ require "github_api"
 require "gitlab"
 require "bitbucket_rest_api"
 
-VERSION = "0.1.1"
+VERSION = "0.2.0"
 SERVICES = %w[github gitlab bitbucket]
+GIT_CONFIGS = %w[epr.token github.oauth-token]
 
 def localtime(t)
   Time.parse(t).localtime.strftime("%x %X")
@@ -31,7 +32,7 @@ def lookup_token
   return ENV["EPR_TOKEN"] unless ENV["EPR_TOKEN"].to_s.strip.empty?
 
   begin
-    %w[epr.token github.oauth-token].each do |setting|
+    GIT_CONFIGS.each do |setting|
       token = `git config #{setting}`.chomp
       return token unless token.empty?
     end
@@ -75,23 +76,26 @@ end
 
 def github(user, repo)
   rows = []
+  method = $export == "pr" ? :pull_requests : :issues
 
   $gh ||= Github.new(:oauth_token => $token, :auto_pagination => true)
-  $gh.pull_requests.list(:user => user, :repo => repo, :state => $filter).each_page do |page|
+  $gh.public_send(method).list(:user => user, :repo => repo, :state => $filter).each_page do |page|
     next if page.size.zero?     # Needed for auto_pagination
 
-    page.each do |pr|
-      next if skip_user?(pr.user.login)
+    page.each do |item|
+      # issues method will return issues and PRs
+      next if $export == "issues" && item.pull_request
+      next if skip_user?(item.user.login)
 
       rows << [
         "#{user}/#{repo}",
-        pr.number,
-        pr.user.login,
-        pr.title,
-        pr.state,
-        localtime(pr.created_at),
-        localtime(pr.updated_at),
-        pr.html_url,
+        item.number,
+        item.user.login,
+        item.title,
+        item.state,
+        localtime(item.created_at),
+        localtime(item.updated_at),
+        item.html_url,
       ]
     end
   end
@@ -102,34 +106,46 @@ end
 def gitlab(user, repo)
   rows = []
 
+  case $export
+  when "pr"
+    methods = [:merge_requests]
+  when "issues"
+    methods = [:issues]
+  else
+    methods = [:merge_requests, :issues]
+  end
+
   # Do we care about this differing in output?
   state = $filter == "open" ? "opened" : $filter
 
   # TODO: custom endpoint
-  $gitlab ||= Gitlab.client(:token => $token, :endpoint => "https://gitlab.com/api/v4")
-  $gitlab.merge_requests("#{user}/#{repo}", :state => state).auto_paginate do |mr|
-    next if skip_user?(mr.author.username)
+  $gitlab ||= Gitlab.client(:auth_token => $token, :endpoint => "https://gitlab.com/api/v4")
+  methods.each do |method|
+    $gitlab.public_send(method, "#{user}/#{repo}", :state => state).auto_paginate do |item|
+      next if skip_user?(item.author.username)
 
-    rows << [
-      "#{user}/#{repo}",
-      # Yes, it's called iid
-      mr.iid,
-      mr.author.username,
-      mr.title,
-      mr.state,
-      localtime(mr.created_at),
-      localtime(mr.updated_at),
-      mr.web_url
-    ]
+      rows << [
+        "#{user}/#{repo}",
+        # Yes, it's called iid
+        item.iid,
+        item.author.username,
+        item.title,
+        item.state,
+        localtime(item.created_at),
+        localtime(item.updated_at),
+        item.web_url
+      ]
+    end
   end
 
   rows
 end
 
-def export_repos(repos)
+def export_repos(argv)
   rows = []
   rows << %w[Repository # User Title State Created Updated URL]
 
+  repos = parse_repos(argv)
   repos.each do |user, repo|
     case $provider
     when "github"
@@ -157,6 +173,7 @@ Hashie.logger = Logger.new(File::NULL) if defined?(Hashie)
 
 $exclude_users = []
 $include_users = []
+$export = "all"
 $filter = "open"
 $provider = ENV["EPR_SERVICE"] || SERVICES[0]
 $token = lookup_token
@@ -164,7 +181,7 @@ $token = lookup_token
 parser = OptionParser.new do |opts|
   opts.banner = "usage: #{File.basename($0)} [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
 
-  opts.on "-c", "--creator=user1,user2,...", Array, "Export PRs created by given username(s); prepend `!' to exclude user" do |u|
+  opts.on "-c", "--creator=USER1,USER2,...", Array, "Export PRs created by given username(s); prepend `!' to exclude user" do |u|
     $exclude_users, $include_users = u.partition { |name| name.start_with?("!") }
     $exclude_users.map! { |name| name[1..-1] } # remove "!"
   end
@@ -178,12 +195,16 @@ parser = OptionParser.new do |opts|
     $token = t
   end
 
-  opts.on "-p, --provider=NAME", SERVICES, "Service provider, one of: #{SERVICES}" do |name|
+  opts.on "-p, --provider=NAME", SERVICES, "Service provider: bitbucket, github, or gitlab; defaults to github" do |name|
     $provider = name
   end
 
-  opts.on "-s", "--state=STATE", %w[open closed all merged], "Export PRs in the given state, defaults to open" do |f|
+  opts.on "-s", "--state=STATE", %w[open closed all merged], "Export items in the given state, defaults to open" do |f|
     $filter = f
+  end
+
+  opts.on "-x", "--export=WHAT", %w[pr issues all], "What to export: pr, issues, or all; defaults to all" do |x|
+    $export = x
   end
 
   opts.on "-v", "--version", "epr version" do
@@ -196,7 +217,7 @@ parser.parse!
 abort parser.banner if ARGV.empty?
 
 begin
-  export_repos(parse_repos(ARGV))
+  export_repos(ARGV)
 rescue => e
   abort "Export failed: #{e}"
 end
