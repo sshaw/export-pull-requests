@@ -39,21 +39,25 @@ The API token can be set by:
 
 #### Default Service
 
-GitHub is the default. You can set a new default via `EPR_SERVICE`.
+github is the default. You can set a new default via `EPR_SERVICE`.
 
 ### Examples
 
-Export all open and closed pull requests in `sshaw/git-link` and `sshaw/itunes_store_transporter`:
+Export open PRs and issues in `sshaw/git-link` and `sshaw/itunes_store_transporter`:
 
-    epr -s all sshaw/git-link sshaw/itunes_store_transporter > pr.csv
+    epr sshaw/git-link sshaw/itunes_store_transporter > pr.csv
 
 Export open pull request not created by `sshaw` in `padrino/padrino-framework`:
 
-    epr -c '!sshaw' padrino/padrino-framework > pr.csv
+    epr -x pr -c '!sshaw' padrino/padrino-framework > pr.csv
 
 Export open merge requests from a GitLab project:
 
-    epr -p gitlab gitlab-org/gitlab-ce > pr.csv
+    epr -x pr -p gitlab gitlab-org/gitlab-ce > pr.csv
+
+Export all issues from a GitLab project:
+
+    epr -x issues -p gitlab gitlab-org/gitlab-ce > pr.csv
 
 ## Service Notes
 
