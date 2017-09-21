@@ -13,6 +13,12 @@ VERSION = "0.2.0"
 SERVICES = %w[github gitlab bitbucket]
 GIT_CONFIGS = %w[epr.token github.oauth-token]
 
+TYPE_ISSUE = "Issue"
+TYPE_PR = "PR"
+
+EXPORT_ISSUES = "issues"
+EXPORT_PRS = "pr"
+
 def localtime(t)
   Time.parse(t).localtime.strftime("%x %X")
 end
@@ -42,33 +48,78 @@ def lookup_token
 end
 
 def bitbucket(user, repo)
-  page = 0
-  rows = []
-
-  $bitbucket ||= BitBucket.new(:basic_auth => $token)
   # TODO: make sure no need to translate any states
   # https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/pullrequests
 
-  loop do
-    page += 1
+  $bitbucket ||= BitBucket.new(:basic_auth => $token)
 
-    prs = $bitbucket.repos.pull_request.all(user, repo, :page => page, :state => $filter.upcase)
-    prs["values"].each do |pr|
-      next if pr.author && skip_user?(pr.author.username)
+  rows = []
+  no_user = "Anonymous"
+  repo_name = "#{user}/#{repo}"
 
-      rows << [
-        "#{user}/#{repo}",
-        pr.id,
-        pr.author ? pr.author.username : "-",
-        pr.title,
-        pr.state,
-        localtime(pr.created_on),
-        localtime(pr.updated_on),
-        pr["links"].html.href
-      ]
+  pull_requests = lambda do
+    page = 0
+
+    loop do
+      page += 1
+
+      prs = $bitbucket.repos.pull_request.all(user, repo, :page => page, :state => $filter.upcase)
+      prs["values"].each do |pr|
+        next if pr.author && skip_user?(pr.author.username)
+
+        rows << [
+          repo_name,
+          TYPE_PR,
+          pr.id,
+          pr.author ? pr.author.username : no_user,
+          pr.title,
+          pr.state,
+          localtime(pr.created_on),
+          localtime(pr.updated_on),
+          pr["links"].html.href
+        ]
+      end
+
+      break unless prs["next"]
     end
+  end
 
-    break unless prs["next"]
+  issues = lambda do
+    start = 0
+
+    loop do
+      issues = $bitbucket.issues.list_repo(user, repo, :start => start, :status => $filter)
+      break unless issues.any?
+
+      issues.each do |issue|
+        next if issue["reported_by"] && skip_user?(issue["reported_by"]["username"])
+
+        rows << [
+          repo_name,
+          TYPE_ISSUE,
+          issue["local_id"],
+          issue["reported_by"] ? issue["reported_by"]["username"] : no_user,
+          issue["title"],
+          issue["status"],
+          localtime(issue["utc_created_on"]),
+          localtime(issue["utc_last_updated"]),
+          # Not in response
+          sprintf("https://bitbucket.org/%s/issues/%s", repo_name, issue["local_id"])
+        ]
+      end
+
+      start += issues.size
+    end
+  end
+
+  case $export
+  when EXPORT_PRS
+    pull_requests[]
+  when EXPORT_ISSUES
+    issues[]
+  else
+    pull_requests[]
+    issues[]
   end
 
   rows
@@ -76,7 +127,7 @@ end
 
 def github(user, repo)
   rows = []
-  method = $export == "pr" ? :pull_requests : :issues
+  method = $export == EXPORT_PRS ? :pull_requests : :issues
 
   $gh ||= Github.new(:oauth_token => $token, :auto_pagination => true)
   $gh.public_send(method).list(:user => user, :repo => repo, :state => $filter).each_page do |page|
@@ -84,11 +135,12 @@ def github(user, repo)
 
     page.each do |item|
       # issues method will return issues and PRs
-      next if $export == "issues" && item.pull_request
+      next if $export == EXPORT_ISSUES && item.pull_request
       next if skip_user?(item.user.login)
 
       rows << [
         "#{user}/#{repo}",
+        item.pull_request ? TYPE_PR : TYPE_ISSUE,
         item.number,
         item.user.login,
         item.title,
@@ -107,9 +159,9 @@ def gitlab(user, repo)
   rows = []
 
   case $export
-  when "pr"
+  when EXPORT_PRS
     methods = [:merge_requests]
-  when "issues"
+  when EXPORT_ISSUES
     methods = [:issues]
   else
     methods = [:merge_requests, :issues]
@@ -126,6 +178,7 @@ def gitlab(user, repo)
 
       rows << [
         "#{user}/#{repo}",
+        method == :issues ? TYPE_ISSUE : TYPE_PR,
         # Yes, it's called iid
         item.iid,
         item.author.username,
@@ -143,7 +196,7 @@ end
 
 def export_repos(argv)
   rows = []
-  rows << %w[Repository # User Title State Created Updated URL]
+  rows << %w[Repository Type # User Title State Created Updated URL]
 
   repos = parse_repos(argv)
   repos.each do |user, repo|
@@ -158,11 +211,7 @@ def export_repos(argv)
       abort "unknown service provider: #$provider"
     end
 
-    rows.each do |r|
-      # Drop Repository column if we only have one repo
-      r.shift unless repos.size > 1
-      puts r.to_csv
-    end
+    rows.each { |r| puts r.to_csv }
     rows.clear
   end
 end
@@ -199,7 +248,7 @@ parser = OptionParser.new do |opts|
     $provider = name
   end
 
-  opts.on "-s", "--state=STATE", %w[open closed all merged], "Export items in the given state, defaults to open" do |f|
+  opts.on "-s", "--state=STATE", "Export items in the given state, defaults to open" do |f|
     $filter = f
   end
 

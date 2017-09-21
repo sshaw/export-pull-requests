@@ -23,7 +23,7 @@ This installs the `epr` executable.
         -t, --token=TOKEN                API token
         -s, --state=STATE                Export PRs in the given state, defaults to open
         -v, --version                    epr version
-        -x, --export=TYPE                What to export: pr, issues, or all; defaults to "all"
+        -x, --export=TYPE                What to export: pr, issues, or all; defaults to all
 
 ### Config
 
