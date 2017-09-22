@@ -2,10 +2,10 @@ require "date"
 
 Gem::Specification.new do |s|
   s.name        = "export-pull-requests"
-  s.version     = "0.1.1"
+  s.version     = "0.2.0"
   s.date        = Date.today
-  s.summary     = "Export pull requests to a CSV file."
-  s.description = "Program to export GitHub, GitLab, or Bitbucket pull requests/merge requests to CSV a file."
+  s.summary     = "Export pull requests and issues to a CSV file."
+  s.description = "Program to export GitHub, GitLab, or Bitbucket pull requests/merge requests and issues to CSV a file."
   s.authors     = ["Skye Shaw"]
   s.email       = "skye.shaw@gmail.com"
   s.executables  << "epr"
