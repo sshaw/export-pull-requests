@@ -34,7 +34,7 @@ These can all be set by one of the below methods or [via the command line](#usag
 The API token can be set by:
 
 * `EPR_TOKEN` environment variable
-* `epr.token` setting in `.gitconfig`
+* `epr.token` setting in `.gitconfig` (add via `git config --add epr.token <your API token>`)
 * `github.oauth-token` setting in `.gitconfig`
 
 #### Default Service
