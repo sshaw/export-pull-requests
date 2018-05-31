@@ -138,17 +138,32 @@ def github(user, repo)
       next if $export == EXPORT_ISSUES && item.pull_request
       next if skip_user?(item.user.login)
 
-      rows << [
-        "#{user}/#{repo}",
-        item.pull_request ? TYPE_PR : TYPE_ISSUE,
-        item.number,
-        item.user.login,
-        item.title,
-        item.state,
-        localtime(item.created_at),
-        localtime(item.updated_at),
-        item.html_url,
-      ]
+      if $body then
+        rows << [
+          "#{user}/#{repo}",
+          item.pull_request ? TYPE_PR : TYPE_ISSUE,
+          item.number,
+          item.user.login,
+          item.title,
+          item.body.gsub("\"","\\\""),
+          item.state,
+          localtime(item.created_at),
+          localtime(item.updated_at),
+          item.html_url,
+        ]
+      else
+        rows << [
+          "#{user}/#{repo}",
+          item.pull_request ? TYPE_PR : TYPE_ISSUE,
+          item.number,
+          item.user.login,
+          item.title,
+          item.state,
+          localtime(item.created_at),
+          localtime(item.updated_at),
+          item.html_url,
+        ]
+      end
     end
   end
 
@@ -226,6 +241,7 @@ $export = "all"
 $filter = "open"
 $provider = ENV["EPR_SERVICE"] || SERVICES[0]
 $token = lookup_token
+$body = false
 
 parser = OptionParser.new do |opts|
   opts.banner = "usage: #{File.basename($0)} [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
@@ -259,6 +275,10 @@ parser = OptionParser.new do |opts|
   opts.on "-v", "--version", "epr version" do
     puts "v#{VERSION} (GitHub v#{Github::VERSION}, GitLab v#{Gitlab::VERSION}, Bitbucket v#{BitBucket::VERSION::STRING})"
     exit
+  end
+
+  opts.on "-b", "--body" do
+    $body = true
   end
 end
 
