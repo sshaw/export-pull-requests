@@ -17,6 +17,7 @@ This installs the `epr` executable.
 ## Usage
 
     usage: epr [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]
+        -b, --body                       Include the issue/pr body description in the output
         -c, --creator=USER1,USER2,...    Export PRs created by given username(s); prepend `!' to exclude user
         -h, --help                       Show this message
         -p, --provider=NAME              Service provider: bitbucket, github, or gitlab; defaults to github
