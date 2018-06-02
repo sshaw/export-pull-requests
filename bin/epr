@@ -138,32 +138,19 @@ def github(user, repo)
       next if $export == EXPORT_ISSUES && item.pull_request
       next if skip_user?(item.user.login)
 
-      if $body then
-        rows << [
-          "#{user}/#{repo}",
-          item.pull_request ? TYPE_PR : TYPE_ISSUE,
-          item.number,
-          item.user.login,
-          item.title,
-          item.body.gsub("\"","\\\""),
-          item.state,
-          localtime(item.created_at),
-          localtime(item.updated_at),
-          item.html_url,
-        ]
-      else
-        rows << [
-          "#{user}/#{repo}",
-          item.pull_request ? TYPE_PR : TYPE_ISSUE,
-          item.number,
-          item.user.login,
-          item.title,
-          item.state,
-          localtime(item.created_at),
-          localtime(item.updated_at),
-          item.html_url,
-        ]
-      end
+      rows << [
+        "#{user}/#{repo}",
+        item.pull_request ? TYPE_PR : TYPE_ISSUE,
+        item.number,
+        item.user.login,
+        item.title,
+        item.body[0..32700],
+        item.state,
+        localtime(item.created_at),
+        localtime(item.updated_at),
+        item.html_url,
+      ]
+      rows.last.delete_at(5) unless $body
     end
   end
 
@@ -211,7 +198,11 @@ end
 
 def export_repos(argv)
   rows = []
-  rows << %w[Repository Type # User Title State Created Updated URL]
+  if $body then
+    rows << %w[Repository Type # User Title Body State Created Updated URL]
+  else
+    rows << %w[Repository Type # User Title State Created Updated URL]
+  end
 
   repos = parse_repos(argv)
   repos.each do |user, repo|
@@ -244,7 +235,7 @@ $token = lookup_token
 $body = false
 
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: #{File.basename($0)} [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
+  opts.banner = "usage: #{File.basename($0)} [-hv] [-s state] [-t token] [-c user1,user2...] [-b] user/repo1 [user/repo2...]"
 
   opts.on "-c", "--creator=USER1,USER2,...", Array, "Export PRs created by given username(s); prepend `!' to exclude user" do |u|
     $exclude_users, $include_users = u.partition { |name| name.start_with?("!") }
@@ -277,7 +268,7 @@ parser = OptionParser.new do |opts|
     exit
   end
 
-  opts.on "-b", "--body" do
+  opts.on "-b", "--body", "Add a 'Body' column to the export that includes the description text" do
     $body = true
   end
 end
