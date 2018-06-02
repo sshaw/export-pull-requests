@@ -268,7 +268,7 @@ parser = OptionParser.new do |opts|
     exit
   end
 
-  opts.on "-b", "--body", "Add a 'Body' column to the export that includes the description text" do
+  opts.on "-b", "--body", "Include the issue/pr body description in the output" do
     $body = true
   end
 end
