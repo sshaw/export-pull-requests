@@ -16,14 +16,15 @@ This installs the `epr` executable.
 
 ## Usage
 
-    usage: epr [-hv] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]
+    usage: epr [-hv] [-e url] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]
         -c, --creator=USER1,USER2,...    Export PRs created by given username(s); prepend `!' to exclude user
+        -e, --endpoint=URL               Endpoint URL for 'enterprise', etc... repositories
         -h, --help                       Show this message
         -p, --provider=NAME              Service provider: bitbucket, github, or gitlab; defaults to github
+        -s, --state=STATE                Export items in the given state, defaults to open
         -t, --token=TOKEN                API token
-        -s, --state=STATE                Export PRs in the given state, defaults to open
+        -x, --export=WHAT                What to export: pr, issues, or all; defaults to all
         -v, --version                    epr version
-        -x, --export=TYPE                What to export: pr, issues, or all; defaults to all
 
 ### Config
 
@@ -61,6 +62,8 @@ Export all issues from a GitLab project:
 
 ## Service Notes
 
+To connect to a custom/"Enterprise" installation of any of the supported services use the endpoint option (`-e`)
+
 ### Bitbucket
 
 You can use [app passwords](https://confluence.atlassian.com/bitbucket/app-passwords-828781300.html) for the API token.
@@ -69,8 +72,6 @@ Just provide your token HTTP Auth style using: `username:app_password`.
 ### GitLab
 
 Authentication can be done via a [personal access token](https://gitlab.com/profile/personal_access_tokens).
-
-Currently the API endpoint URL is hardcoded to `https://gitlab.com/api/v4`.
 
 Enterprise editions of GitLab have an [issue export feature](https://docs.gitlab.com/ee/user/project/issues/csv_export.html).
 
@@ -81,3 +82,7 @@ Skye Shaw [skye.shaw AT gmail]
 ## License
 
 Released under the MIT License: www.opensource.org/licenses/MIT
+
+---
+
+Made by [ScreenStaring](http://screenstaring.com)
