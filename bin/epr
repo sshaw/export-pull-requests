@@ -9,7 +9,7 @@ require "github_api"
 require "gitlab"
 require "bitbucket_rest_api"
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 SERVICES = %w[github gitlab bitbucket]
 GIT_CONFIGS = %w[epr.token github.oauth-token]
 
@@ -51,7 +51,10 @@ def bitbucket(user, repo)
   # TODO: make sure no need to translate any states
   # https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Busername%7D/%7Brepo_slug%7D/pullrequests
 
-  $bitbucket ||= BitBucket.new(:basic_auth => $token)
+  options = { :basic_auth => $token }
+  options[:endpoint] = $endpoint if $endpoint
+
+  $bitbucket ||= BitBucket.new(options)
 
   rows = []
   no_user = "Anonymous"
@@ -129,7 +132,10 @@ def github(user, repo)
   rows = []
   method = $export == EXPORT_PRS ? :pull_requests : :issues
 
-  $gh ||= Github.new(:oauth_token => $token, :auto_pagination => true)
+  options = { :oauth_token => $token, :auto_pagination => true }
+  options[:endpoint] = $endpoint if $endpoint
+
+  $gh ||= Github.new(options)
   $gh.public_send(method).list(:user => user, :repo => repo, :state => $filter).each_page do |page|
     next if page.size.zero?     # Needed for auto_pagination
 
@@ -172,8 +178,7 @@ def gitlab(user, repo)
   # Do we care about this differing in output?
   state = $filter == "open" ? "opened" : $filter
 
-  # TODO: custom endpoint
-  $gitlab ||= Gitlab.client(:auth_token => $token, :endpoint => "https://gitlab.com/api/v4")
+  $gitlab ||= Gitlab.client(:auth_token => $token, :endpoint => $endpoint || "https://gitlab.com/api/v4")
   methods.each do |method|
     $gitlab.public_send(method, "#{user}/#{repo}", :state => state).auto_paginate do |item|
       next if skip_user?(item.author.username)
@@ -229,26 +234,27 @@ Hashie.logger = Logger.new(File::NULL) if defined?(Hashie)
 $exclude_users = []
 $include_users = []
 $export = "all"
+$endpoint = nil
 $filter = "open"
 $provider = ENV["EPR_SERVICE"] || SERVICES[0]
 $token = lookup_token
 $body = false
 
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: #{File.basename($0)} [-hv] [-s state] [-t token] [-c user1,user2...] [-b] user/repo1 [user/repo2...]"
+  opts.banner = "usage: #{File.basename($0)} [-hv] [-e url] [-s state] [-t token] [-c user1,user2...] [-b] user/repo1 [user/repo2...]"
 
   opts.on "-c", "--creator=USER1,USER2,...", Array, "Export PRs created by given username(s); prepend `!' to exclude user" do |u|
     $exclude_users, $include_users = u.partition { |name| name.start_with?("!") }
     $exclude_users.map! { |name| name[1..-1] } # remove "!"
   end
 
+  opts.on "-e", "--endpoint=URL", "Endpoint URL for 'enterprise', etc... repositories" do |url|
+    $endpoint = url
+  end
+
   opts.on "-h", "--help", "Show this message" do
     puts opts
     exit
-  end
-
-  opts.on "-t", "--token=TOKEN", "API token" do |t|
-    $token = t
   end
 
   opts.on "-p, --provider=NAME", SERVICES, "Service provider: bitbucket, github, or gitlab; defaults to github" do |name|
@@ -257,6 +263,10 @@ parser = OptionParser.new do |opts|
 
   opts.on "-s", "--state=STATE", "Export items in the given state, defaults to open" do |f|
     $filter = f
+  end
+
+  opts.on "-t", "--token=TOKEN", "API token" do |t|
+    $token = t
   end
 
   opts.on "-x", "--export=WHAT", %w[pr issues all], "What to export: pr, issues, or all; defaults to all" do |x|
