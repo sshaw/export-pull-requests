@@ -150,11 +150,13 @@ def github(user, repo)
         item.number,
         item.user.login,
         item.title,
+        item.body[0..32700],
         item.state,
         localtime(item.created_at),
         localtime(item.updated_at),
         item.html_url,
       ]
+      rows.last.delete_at(5) unless $body
     end
   end
 
@@ -201,7 +203,11 @@ end
 
 def export_repos(argv)
   rows = []
-  rows << %w[Repository Type # User Title State Created Updated URL]
+  if $body then
+    rows << %w[Repository Type # User Title Body State Created Updated URL]
+  else
+    rows << %w[Repository Type # User Title State Created Updated URL]
+  end
 
   repos = parse_repos(argv)
   repos.each do |user, repo|
@@ -232,9 +238,10 @@ $endpoint = nil
 $filter = "open"
 $provider = ENV["EPR_SERVICE"] || SERVICES[0]
 $token = lookup_token
+$body = false
 
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: #{File.basename($0)} [-hv] [-e url] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
+  opts.banner = "usage: #{File.basename($0)} [-hv] [-e url] [-s state] [-t token] [-c user1,user2...] [-b] user/repo1 [user/repo2...]"
 
   opts.on "-c", "--creator=USER1,USER2,...", Array, "Export PRs created by given username(s); prepend `!' to exclude user" do |u|
     $exclude_users, $include_users = u.partition { |name| name.start_with?("!") }
@@ -269,6 +276,10 @@ parser = OptionParser.new do |opts|
   opts.on "-v", "--version", "epr version" do
     puts "v#{VERSION} (GitHub v#{Github::VERSION}, GitLab v#{Gitlab::VERSION}, Bitbucket v#{BitBucket::VERSION::STRING})"
     exit
+  end
+
+  opts.on "-b", "--body", "Include the issue/pr body description in the output" do
+    $body = true
   end
 end
 
