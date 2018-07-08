@@ -9,7 +9,7 @@ require "github_api"
 require "gitlab"
 require "bitbucket_rest_api"
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 SERVICES = %w[github gitlab bitbucket]
 GIT_CONFIGS = %w[epr.token github.oauth-token]
 
@@ -18,6 +18,8 @@ TYPE_PR = "PR"
 
 EXPORT_ISSUES = "issues"
 EXPORT_PRS = "pr"
+
+DEFAULT_BODY_LENGTH = 2 ** 32 - 1
 
 def localtime(t)
   Time.parse(t).localtime.strftime("%x %X")
@@ -155,6 +157,13 @@ def github(user, repo)
         localtime(item.updated_at),
         item.html_url,
       ]
+
+      if $body
+        body = item.body
+        # -3 for "..."
+        body = body.slice(0, DEFAULT_BODY_LENGTH - 3) << "..." if body.size > DEFAULT_BODY_LENGTH
+        rows[-1].insert(4, body)
+      end
     end
   end
 
@@ -202,6 +211,7 @@ end
 def export_repos(argv)
   rows = []
   rows << %w[Repository Type # User Title State Created Updated URL]
+  rows[-1].insert(4, "Body") if $body
 
   repos = parse_repos(argv)
   repos.each do |user, repo|
@@ -232,9 +242,14 @@ $endpoint = nil
 $filter = "open"
 $provider = ENV["EPR_SERVICE"] || SERVICES[0]
 $token = lookup_token
+$body = false
 
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: #{File.basename($0)} [-hv] [-e url] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
+  opts.banner = "usage: #{File.basename($0)} [-bhv] [-e url] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
+
+  opts.on "-b", "--body", "Include the issue/pr body description in the output" do
+    $body = true
+  end
 
   opts.on "-c", "--creator=USER1,USER2,...", Array, "Export PRs created by given username(s); prepend `!' to exclude user" do |u|
     $exclude_users, $include_users = u.partition { |name| name.start_with?("!") }
