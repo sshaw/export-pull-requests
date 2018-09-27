@@ -161,7 +161,7 @@ def github(user, repo)
       if $body
         body = item.body
         # -3 for "..."
-        body = body.slice(0, DEFAULT_BODY_LENGTH - 3) << "..." if body.size > DEFAULT_BODY_LENGTH
+        body = body.slice(0, DEFAULT_BODY_LENGTH - 3) << "..." if body.size > DEFAULT_BODY_LENGTH unless body == nil
         rows[-1].insert(4, body)
       end
     end
