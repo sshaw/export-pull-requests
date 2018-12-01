@@ -1,4 +1,10 @@
 --------------------
+v0.2.2  2018-11-30
+--------------------
+Enhancements:
+* Add support for exporting issue body (GitHub only)
+
+--------------------
 v0.2.1  2018-06-05
 --------------------
 Enhancements:

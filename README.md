@@ -17,7 +17,7 @@ This installs the `epr` executable.
 ## Usage
 
     usage: epr [-bhv] [-e url] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]
-        -b, --body                       Include the issue/pr body description in the output
+        -b, --body                       Include the issue/pr body description in the output (GitHub only)
         -c, --creator=USER1,USER2,...    Export PRs created by given username(s); prepend `!' to exclude user
         -e, --endpoint=URL               Endpoint URL for 'enterprise', etc... repositories
         -h, --help                       Show this message

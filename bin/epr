@@ -247,7 +247,7 @@ $body = false
 parser = OptionParser.new do |opts|
   opts.banner = "usage: #{File.basename($0)} [-bhv] [-e url] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
 
-  opts.on "-b", "--body", "Include the issue/pr body description in the output" do
+  opts.on "-b", "--body", "Include the issue/pr body description in the output (GitHub only)" do
     $body = true
   end
 
