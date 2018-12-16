@@ -76,6 +76,10 @@ Authentication can be done via a [personal access token](https://gitlab.com/prof
 
 Enterprise editions of GitLab have an [issue export feature](https://docs.gitlab.com/ee/user/project/issues/csv_export.html).
 
+## See Also
+
+- [Batch Labels](https://github.com/sshaw/batchlabels) - Add/remove labels in batches to/from GitHub issues and pull requests.
+
 ## Author
 
 Skye Shaw [skye.shaw AT gmail]
