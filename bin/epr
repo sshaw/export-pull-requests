@@ -9,7 +9,7 @@ require "github_api"
 require "gitlab"
 require "bitbucket_rest_api"
 
-VERSION = "0.2.2"
+VERSION = "0.3.0"
 SERVICES = %w[github gitlab bitbucket]
 GIT_CONFIGS = %w[epr.token github.oauth-token]
 
@@ -138,7 +138,12 @@ def github(user, repo)
   options[:endpoint] = $endpoint if $endpoint
 
   $gh ||= Github.new(options)
-  $gh.public_send(method).list(:user => user, :repo => repo, :state => $filter).each_page do |page|
+  $gh.public_send(method).list(:user => user,
+                               :repo => repo,
+                               :state => $filter,
+                               :milestone => $milestone,
+                               :labels => $labels).each_page do |page|
+
     next if page.size.zero?     # Needed for auto_pagination
 
     page.each do |item|
@@ -239,6 +244,7 @@ $exclude_users = []
 $include_users = []
 $export = "all"
 $endpoint = nil
+$milestone = $labels = $assignee = nil
 $filter = "open"
 $provider = ENV["EPR_SERVICE"] || SERVICES[0]
 $token = lookup_token
@@ -258,6 +264,14 @@ parser = OptionParser.new do |opts|
 
   opts.on "-e", "--endpoint=URL", "Endpoint URL for 'enterprise', etc... repositories" do |url|
     $endpoint = url
+  end
+
+  opts.on "-m", "--milestone=WHAT", "Export items assigned to the given milestone (GitHub only)" do |m|
+    $milestone = m
+  end
+
+  opts.on "-l", "--labels=LABEL(S)", "Export items with the given label(s) (GitHub only)" do |l|
+    $labels = l
   end
 
   opts.on "-h", "--help", "Show this message" do
