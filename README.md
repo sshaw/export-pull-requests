@@ -21,6 +21,7 @@ This installs the `epr` executable.
         -c, --creator=USER1,USER2,...    Export PRs created by given username(s); prepend `!' to exclude user
         -e, --endpoint=URL               Endpoint URL for 'enterprise', etc... repositories
         -m, --milestone=WHAT             Export items assigned to the given milestone (GitHub only)
+        -a, --assignee=ASSIGNEE          Export items assigned to the given user (GitHub only; use 'none' for unassigned items)
         -l, --labels=LABEL(S)            Export items with the given label(s) (GitHub only)
         -h, --help                       Show this message
         -p, --provider=NAME              Service provider: bitbucket, github, or gitlab; defaults to github
