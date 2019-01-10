@@ -142,6 +142,7 @@ def github(user, repo)
                                :repo => repo,
                                :state => $filter,
                                :milestone => $milestone,
+                               :assignee => $assignee,
                                :labels => $labels).each_page do |page|
 
     next if page.size.zero?     # Needed for auto_pagination
@@ -268,6 +269,10 @@ parser = OptionParser.new do |opts|
 
   opts.on "-m", "--milestone=WHAT", "Export items assigned to the given milestone (GitHub only)" do |m|
     $milestone = m
+  end
+
+  opts.on "-a", "--assignee=USERNAME", "Export items assigned to the given user (GitHub only; use 'none' for unassigned items)" do |a|
+    $assignee = a
   end
 
   opts.on "-l", "--labels=LABEL(S)", "Export items with the given label(s) (GitHub only)" do |l|
