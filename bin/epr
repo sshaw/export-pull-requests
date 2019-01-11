@@ -252,7 +252,7 @@ $token = lookup_token
 $body = false
 
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: #{File.basename($0)} [-bhv] [-e url] [-s state] [-t token] [-c user1,user2...] user/repo1 [user/repo2...]"
+  opts.banner = "usage: #{File.basename($0)} [options] user/repo1 [user/repo2...]"
 
   opts.on "-b", "--body", "Include the issue/pr body description in the output (GitHub only)" do
     $body = true
@@ -271,7 +271,7 @@ parser = OptionParser.new do |opts|
     $milestone = m
   end
 
-  opts.on "-a", "--assignee=USERNAME", "Export items assigned to the given user (GitHub only; use 'none' for unassigned items)" do |a|
+  opts.on "-a", "--assignee=USER", "Export items assigned to the given user (GitHub only)" do |a|
     $assignee = a
   end
 

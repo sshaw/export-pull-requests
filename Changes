@@ -1,4 +1,11 @@
 --------------------
+v0.3.0  2019-01-10
+--------------------
+Enhancements:
+* Add support for filtering on milestones and labels (GitHub only)
+* Add support for filtering on assignees (GitHub only, thanks Caroline Boyden)
+
+--------------------
 v0.2.2  2018-11-30
 --------------------
 Enhancements:
