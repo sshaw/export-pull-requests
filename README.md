@@ -20,9 +20,9 @@ This installs the `epr` executable.
         -b, --body                       Include the issue/pr body description in the output (GitHub only)
         -c, --creator=USER1,USER2,...    Export PRs created by given username(s); prepend `!' to exclude user
         -e, --endpoint=URL               Endpoint URL for 'enterprise', etc... repositories
-        -m, --milestone=WHAT             Export items assigned to the given milestone (GitHub only)
-        -a, --assignee=USER              Export items assigned to the given user (GitHub only)
-        -l, --labels=LABEL(S)            Export items with the given label(s) (GitHub only)
+        -m, --milestone=WHAT             Export items assigned to the given milestone (GitHub/GitLab only)
+        -a, --assignee=USER              Export items assigned to the given user (GitHub/GitLab only)
+        -l, --labels=LABEL(S)            Export items with the given label(s) (GitHub/GitLab only)
         -h, --help                       Show this message
         -p, --provider=NAME              Service provider: bitbucket, github, or gitlab; defaults to github
         -s, --state=STATE                Export items in the given state, defaults to open

@@ -9,7 +9,7 @@ require "github_api"
 require "gitlab"
 require "bitbucket_rest_api"
 
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 SERVICES = %w[github gitlab bitbucket]
 GIT_CONFIGS = %w[epr.token github.oauth-token]
 
@@ -190,10 +190,18 @@ def gitlab(user, repo)
 
   # Do we care about this differing in output?
   state = $filter == "open" ? "opened" : $filter
+  options = {
+    :milestone => $milestone,
+    :labels => $labels,
+    :state => state
+  }
+
+  # If assignee_id is nil an error is raised
+  options[:assignee_id] = $assignee if $assignee
 
   $gitlab ||= Gitlab.client(:auth_token => $token, :endpoint => $endpoint || "https://gitlab.com/api/v4")
   methods.each do |method|
-    $gitlab.public_send(method, "#{user}/#{repo}", :state => state).auto_paginate do |item|
+    $gitlab.public_send(method, "#{user}/#{repo}", options).auto_paginate do |item|
       next if skip_user?(item.author.username)
 
       rows << [
@@ -267,15 +275,15 @@ parser = OptionParser.new do |opts|
     $endpoint = url
   end
 
-  opts.on "-m", "--milestone=WHAT", "Export items assigned to the given milestone (GitHub only)" do |m|
+  opts.on "-m", "--milestone=WHAT", "Export items assigned to the given milestone (GitHub/GitLab only)" do |m|
     $milestone = m
   end
 
-  opts.on "-a", "--assignee=USER", "Export items assigned to the given user (GitHub only)" do |a|
+  opts.on "-a", "--assignee=USER", "Export items assigned to the given user (GitHub/GitLab only)" do |a|
     $assignee = a
   end
 
-  opts.on "-l", "--labels=LABEL(S)", "Export items with the given label(s) (GitHub only)" do |l|
+  opts.on "-l", "--labels=LABEL(S)", "Export items with the given label(s) (GitHub/GitLab only)" do |l|
     $labels = l
   end
 
