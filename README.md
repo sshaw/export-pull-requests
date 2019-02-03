@@ -73,7 +73,7 @@ To connect to a custom/"Enterprise" installation of any of the supported service
 You can use [app passwords](https://confluence.atlassian.com/bitbucket/app-passwords-828781300.html) for the API token.
 Just provide your token info in `bitbucket_username:app_password` format:
 
-    epr -t bitbucket_username:app_password user/repo1
+    epr -p bitbucket -t bitbucket_username:app_password user/repo1
 
 ### GitLab
 
