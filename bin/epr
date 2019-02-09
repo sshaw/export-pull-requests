@@ -138,12 +138,12 @@ def github(user, repo)
   options[:endpoint] = $endpoint if $endpoint
 
   $gh ||= Github.new(options)
-  $gh.public_send(method).list(:user => user,
-                               :repo => repo,
-                               :state => $filter,
-                               :milestone => $milestone,
-                               :assignee => $assignee,
-                               :labels => $labels).each_page do |page|
+
+  options = { :user => user, :repo => repo, :state => $filter, :labels => $labels }
+  options[:milestone] = $milestone if $milestone
+  options[:assignee] = $assignee if $assignee
+
+  $gh.public_send(method).list(options).each_page do |page|
 
     next if page.size.zero?     # Needed for auto_pagination
 

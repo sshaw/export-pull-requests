@@ -1,3 +1,8 @@
+v0.3.1  2019-02-09
+--------------------
+Bug Fixes:
+* Don't supply assignee or milestone for GitHub if nil
+
 --------------------
 v0.3.1  2019-01-28
 --------------------
