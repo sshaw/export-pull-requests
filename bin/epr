@@ -9,7 +9,7 @@ require "github_api"
 require "gitlab"
 require "bitbucket_rest_api"
 
-VERSION = "0.3.2"
+VERSION = "0.3.3"
 SERVICES = %w[github gitlab bitbucket]
 GIT_CONFIGS = %w[epr.token github.oauth-token]
 
