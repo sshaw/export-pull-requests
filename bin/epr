@@ -154,7 +154,9 @@ def github(user, repo)
 
       rows << [
         "#{user}/#{repo}",
-        item.pull_request ? TYPE_PR : TYPE_ISSUE,
+        # If we're only retrieving PRs then item.pull_request will be nil
+        # It's only populated when retrieving both (issues method).
+        item.pull_request || method == :pull_requests ? TYPE_PR : TYPE_ISSUE,
         item.number,
         item.user.login,
         item.title,
