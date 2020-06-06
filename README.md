@@ -66,7 +66,9 @@ Export all issues from a GitLab project:
 
 ## Service Notes
 
-To connect to a custom/"Enterprise" installation of any of the supported services use the endpoint option (`-e`)
+To connect to a custom/"Enterprise" installation of any of the supported services use the endpoint option (`-e`).
+
+The provided URL must point the API endpoint, not the user-facing site. For GitHub this is `http(s)://YOUR-SITE/api/v3`.
 
 ### Bitbucket
 
