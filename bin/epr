@@ -135,7 +135,11 @@ def github(user, repo)
   method = $export == EXPORT_PRS ? :pull_requests : :issues
 
   options = { :oauth_token => $token, :auto_pagination => true }
-  options[:endpoint] = $endpoint if $endpoint
+  if $endpoint
+    options[:endpoint] = $endpoint
+  elsif $site
+    options[:site] = $site
+  end
 
   $gh ||= Github.new(options)
 
@@ -255,6 +259,7 @@ $exclude_users = []
 $include_users = []
 $export = "all"
 $endpoint = nil
+$site = nil
 $milestone = $labels = $assignee = nil
 $filter = "open"
 $provider = ENV["EPR_SERVICE"] || SERVICES[0]
@@ -273,7 +278,7 @@ parser = OptionParser.new do |opts|
     $exclude_users.map! { |name| name[1..-1] } # remove "!"
   end
 
-  opts.on "-e", "--endpoint=URL", "Endpoint URL for 'enterprise', etc... repositories" do |url|
+  opts.on "-e", "--endpoint=URL", "API URL for 'enterprise', etc... repositories" do |url|
     $endpoint = url
   end
 
@@ -300,6 +305,10 @@ parser = OptionParser.new do |opts|
 
   opts.on "-s", "--state=STATE", "Export items in the given state, defaults to open" do |f|
     $filter = f
+  end
+
+  opts.on "--site=SITE", "URL for 'enterprise', etc... sites" do |site|
+    $site = site
   end
 
   opts.on "-t", "--token=TOKEN", "API token" do |t|
