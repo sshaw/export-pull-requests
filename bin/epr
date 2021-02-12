@@ -70,13 +70,14 @@ def bitbucket(user, repo)
 
       prs = $bitbucket.repos.pull_request.all(user, repo, :page => page, :state => $filter.upcase)
       prs["values"].each do |pr|
-        next if pr.author && skip_user?(pr.author.username)
+        next if pr.author && (skip_user?(pr.author.display_name) || skip_user?(pr.author.nickname))
 
         rows << [
           repo_name,
           TYPE_PR,
           pr.id,
-          pr.author ? pr.author.username : no_user,
+          # With the 2.0 API is this check necessary?
+          pr.author ? pr.author.display_name : no_user,
           pr.title,
           pr.state,
           localtime(pr.created_on),
