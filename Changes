@@ -1,3 +1,8 @@
+v0.3.4  2021-02-12
+--------------------
+Bug Fixes:
+* Bitbucket username not exported for PRs under 2.0 API (#20)
+
 v0.3.3  2019-05-01
 --------------------
 Bug Fixes:
