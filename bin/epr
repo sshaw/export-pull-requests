@@ -163,9 +163,19 @@ def github(user, repo)
         item.title,
         item.state,
         localtime(item.created_at),
-        localtime(item.updated_at),
-        item.html_url,
+        localtime(item.updated_at)
       ]
+
+      # GitHub issues API returns PRs but not their merged_at time. To get that we need to specifically export PRs
+      if item.pull_request && $export != EXPORT_ISSUES
+        rows[-1] << "(use `-x pr` option)"
+      elsif $export != EXPORT_PRS
+        rows[-1] << "N/A"
+      else
+        rows[-1] << (item.merged_at ? localtime(item.merged_at) : nil)
+      end
+
+      rows[-1] << item.html_url
 
       if $body
         body = item.body
@@ -216,9 +226,16 @@ def gitlab(user, repo)
         item.title,
         item.state,
         localtime(item.created_at),
-        localtime(item.updated_at),
-        item.web_url
+        localtime(item.updated_at)
       ]
+
+      if method == :issues
+        rows[-1] << "N/A"
+      else
+        rows[-1] << (item.merged_at ? localtime(item.merged_at) : nil)
+      end
+
+      rows[-1] << item.web_url
     end
   end
 
@@ -227,7 +244,7 @@ end
 
 def export_repos(argv)
   rows = []
-  rows << %w[Repository Type # User Title State Created Updated URL]
+  rows << %w[Repository Type # User Title State Created Updated Merged URL]
   rows[-1].insert(4, "Body") if $body
 
   repos = parse_repos(argv)
