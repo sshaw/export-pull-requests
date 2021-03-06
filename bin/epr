@@ -251,6 +251,7 @@ def export_repos(argv)
   repos.each do |user, repo|
     case $provider
     when "github"
+      abort "milestone filtering can only be used with issues" if $milestone && $export == EXPORT_PRS
       rows.concat(github(user, repo))
     when "gitlab"
       rows.concat(gitlab(user, repo))
