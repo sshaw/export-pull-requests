@@ -1,3 +1,9 @@
+v0.3.5  2021-03-16
+--------------------
+Enhancements:
+* Add Merged column containing PR merge time
+* Exit with failure if attempting to export GitHub milestones for PRs
+
 v0.3.4  2021-02-12
 --------------------
 Bug Fixes:
