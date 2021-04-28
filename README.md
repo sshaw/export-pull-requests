@@ -6,7 +6,8 @@ Supports GitHub, GitLab, and Bitbucket.
 
 ## Installation
 
-[Ruby](https://www.ruby-lang.org/en/documentation/installation/) is required.
+[Ruby](https://www.ruby-lang.org/en/documentation/installation/) version < 3 is required
+([why?](https://github.com/sshaw/export-pull-requests/issues/26)).
 
 With Ruby installed run:
 
