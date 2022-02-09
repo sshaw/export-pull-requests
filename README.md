@@ -6,9 +6,7 @@ Supports GitHub, GitLab, and Bitbucket.
 
 ## Installation
 
-[Ruby](https://www.ruby-lang.org/en/documentation/installation/) version < 3 is required
-([why?](https://github.com/sshaw/export-pull-requests/issues/26)).
-
+[Ruby](https://www.ruby-lang.org/en/documentation/installation/) is required.
 With Ruby installed run:
 
     gem install export-pull-requests
@@ -72,6 +70,11 @@ To connect to a custom/"Enterprise" installation of any of the supported service
 The provided URL must point the API endpoint, not the user-facing site. For GitHub this is `http(s)://YOUR-SITE/api/v3`.
 
 ### Bitbucket
+
+**Due to [various issues with the Bitbucket gem](https://github.com/sshaw/export-pull-requests/issues/26) support for Bitbucket
+requires using a Ruby version < 3 and manually installing the Bitbucket library via `gem install bitbucket_rest_api`.**
+
+**Alternatively, on a Ruby version < 3 you can run: gem install export-pull-requests -v=0.3.7**
 
 You can use [app passwords](https://confluence.atlassian.com/bitbucket/app-passwords-828781300.html) for the API token.
 Just provide your token info in `bitbucket_username:app_password` format:

@@ -7,9 +7,8 @@ require "logger"
 
 require "github_api"
 require "gitlab"
-require "bitbucket_rest_api"
 
-VERSION = "0.3.6"
+VERSION = "0.4.0"
 SERVICES = %w[github gitlab bitbucket]
 GIT_CONFIGS = %w[epr.token github.oauth-token]
 
@@ -256,6 +255,19 @@ def export_repos(argv)
     when "gitlab"
       rows.concat(gitlab(user, repo))
     when "bitbucket"
+      begin
+        require "bitbucket_rest_api"
+      rescue LoadError => e
+        # Could be an error due to gem version conflict
+        abort e.message unless e.instance_of?(LoadError)
+        abort(<<MESSAGE)
+As of v0.4 the Bitbucket API is no longer included by default. To use Bitbucket you must use
+a Ruby version < 3 and install the dependency yourself via: gem install bitbucket_rest_api.
+
+Alternatively, on a Ruby version < 3 you can run: gem install export-pull-requests -v=0.3.7
+MESSAGE
+      end
+
       rows.concat(bitbucket(user, repo))
     else
       abort "unknown service provider: #$provider"
@@ -330,7 +342,13 @@ parser = OptionParser.new do |opts|
   end
 
   opts.on "-v", "--version", "epr version" do
-    puts "v#{VERSION} (GitHub v#{Github::VERSION}, GitLab v#{Gitlab::VERSION}, Bitbucket v#{BitBucket::VERSION::STRING})"
+    begin
+      require "bitbucket_rest_api"
+    rescue LoadError
+    end
+
+    bb_version = defined?(BitBucket) ? "v#{BitBucket::VERSION::STRING}" : "[Not installed]"
+    printf "v#{VERSION} (GitHub v#{Github::VERSION}, GitLab v#{Gitlab::VERSION}, Bitbucket %s)\n", bb_version
     exit
   end
 end
