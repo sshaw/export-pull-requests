@@ -1,3 +1,12 @@
+v0.4.0  2022-02-10
+--------------------
+Enhancements:
+* Support for Ruby versions >= 3
+
+Changes:
+* Bitbucket API client is no longer bundled see issue #26 for more info.
+
+
 v0.3.6  2021-04-28
 --------------------
 Bug fixes:
